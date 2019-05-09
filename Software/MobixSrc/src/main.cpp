@@ -2,16 +2,21 @@
 #include <stdlib.h>
 #include "WiFi.h"
 #include "esp_system.h"
-
+#include "CMPS11.h"
 //----- ROS -----//
 #include <ros.h>
 #include <rosserial_arduino/Move.h>
 // #include <rosserial_arduino/Adc.h>
+//----- Define -----//
+#define RXD2 16
+#define TXD2 17
 
-const char* ssid = "VENTURINI";
-const char* password = "tplink10";
+// const char* ssid = "VENTURINI";
+// const char* password = "tplink10";
+const char* ssid = "Torcida organizada do flamengo";
+const char* password = "calcinhapretaemmaceio";
 
-IPAddress server(192, 168, 2, 111);
+IPAddress server(192, 168, 15, 17);
 WiFiClient client;
 
 class WiFiHardware {
@@ -56,49 +61,54 @@ void setup(){
   Serial.begin(57600);
   Serial.println();
 
-   Serial.print("Connecting to ");
-   Serial.print(ssid);
-  ///
-  // Connect the ESP32 the the wifi AP
-  WiFi.begin(ssid, password);
-  //WiFi.begin(ssid);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-  delay(500);
-  Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println(WiFi.macAddress());
-
-  //---Set the connection to rosserial socket server----------//
-  // Set the connection to rosserial socket server
-  nh.initNode();
-  nh.advertise(movePub);
-
-  // Check nh.Connected
-
-  while(nh.connected() == 0)
-  {
-  nh.spinOnce();
-  Serial.println("Not Connected to rosserial socket server");
-  delay(100);
-  }
-  Serial.println("Connected to rosserial socket server");
+  //  Serial.print("Connecting to ");
+  //  Serial.print(ssid);
+  // ///
+  // // Connect the ESP32 the the wifi AP
+  // WiFi.begin(ssid, password);
+  // //WiFi.begin(ssid);
+  // while (WiFi.status() != WL_CONNECTED)
+  // {
+  // delay(500);
+  // Serial.print(".");
+  // }
+  // Serial.println("");
+  // Serial.println("WiFi connected");
+  // Serial.println("IP address: ");
+  // Serial.println(WiFi.localIP());
+  // Serial.println(WiFi.macAddress());
+  //
+  // //---Set the connection to rosserial socket server----------//
+  // // Set the connection to rosserial socket server
+  // nh.initNode();
+  // nh.advertise(movePub);
+  //
+  // // Check nh.Connected
+  //
+  // while(nh.connected() == 0)
+  // {
+  // nh.spinOnce();
+  // Serial.println("Not Connected to rosserial socket server");
+  // delay(100);
+  // }
+  // Serial.println("Connected to rosserial socket server");
   ////
-
+  Serial2.begin(9600);
+  //calibrateIMU();
 }
 
 //------------------- Loop ---------------------//
 void loop(){
-  Serial.println("LOOP STARTED !");
-  move_msg.vel[0] = 1;
-  move_msg.time = 1;
+  //Serial.println("LOOP STARTED !");
+  //move_msg.vel[0] = 1;
+  // move_msg.time = 1;
+  //
+  // movePub.publish(&move_msg);
 
-  movePub.publish(&move_msg);
+  // nh.spinOnce();
 
-  nh.spinOnce();
-  delay(1000);
+
+
+  sendIMUdata();
+  delay(100);
 }
