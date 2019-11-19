@@ -56,14 +56,14 @@ void draw(){
 void timer(int){
   for (int i=0 ; i<int(robots.size()) ; i++) {
     vector<Robot*> nearestRobots;
-    vector<float> robotPos = robots[i]->getPos();
+    vector<int> robotPos = robots[i]->getPos();
 
     //---------- Calculate nearest robots ----------//
     Robot *nextRight=NULL, *nextLeft=NULL;
     for (int j=0 ; j<int(robots.size()) ; j++) {
       if(i==j)continue;
-      vector<float> otherPos = robots[j]->getPos();
-      if(abs(robotPos[1]-otherPos[1])<0.99f){// Same level
+      vector<int> otherPos = robots[j]->getPos();
+      if(abs(robotPos[1]-otherPos[1])<100){// Same level
         // Check if robot is the next to the right
         if(otherPos[0]>robotPos[0]){
           if(nextRight==NULL){
@@ -105,8 +105,8 @@ void timer(int){
     // Avoid colision
     for (int j=0 ; j<int(robots.size()) ; j++) {
       if(j==i)continue;
-      if(robots[i]->getPos()[1]-robots[j]->getPos()[1]<0.99f &&
-         abs(robots[j]->getPos()[0]-robots[i]->getPos()[0])<=1.0f){// Same level and making contact
+      if(robots[i]->getPos()[1]-robots[j]->getPos()[1]<100 &&
+         abs(robots[j]->getPos()[0]-robots[i]->getPos()[0])<=100){// Same level and making contact
         //Check if it makes contact on the left
         if(robots[i]->getPos()[0]>robots[j]->getPos()[0]){
           force[0]<0 ? force[0]=0 : force[0];
@@ -120,8 +120,8 @@ void timer(int){
     // Move robot up
     for (int j=0 ; j<int(robots.size()) ; j++) {
       if(j==i)continue;
-      if(robots[i]->getPos()[1]-robots[j]->getPos()[1]<0.99f &&
-         abs(robots[j]->getPos()[0]-robots[i]->getPos()[0])<=1.1f){// Same level and making contact
+      if(robots[i]->getPos()[1]-robots[j]->getPos()[1]<100 &&
+         abs(robots[j]->getPos()[0]-robots[i]->getPos()[0])<=100){// Same level and making contact
         //Check if it makes contact on the left
         if(robots[i]->getPos()[0]>robots[j]->getPos()[0]){
           if(robots[i]->getBeltState()==0){
@@ -152,7 +152,7 @@ void createRobots(){
   robots.resize(qtyRobots);
   for (int i = 0; i < qtyRobots; i++) {
     robots[i] = new Robot();
-    robots[i]->setPos(vector<float>{float(i*2),0});
+    robots[i]->setPos(vector<int>{i*200,0});
     robots[i]->setColor(vector<float>{rand()%100/100.0f,rand()%100/100.0f,rand()%100/100.0f});
     robots[i]->setId(i);
   }

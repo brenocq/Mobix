@@ -14,6 +14,7 @@ Robot::Robot(){
   _pos.resize(2);
   _color.resize(3);
   _isConnected = false;
+  _canConnect = true;
   _robotConnected = NULL;
   _beltState = 0;
   _lastAngleAnimationBelt = 0;
@@ -25,66 +26,75 @@ Robot::~Robot(){
 }
 
 void Robot::run(vector<Robot*>nearestRobots, vector<float>force){
-  if(_id==3){
+  bool canConnect = true;
+
+  if(_id==8){
     cout<<"("<<force[0]<<","<<force[1]<<") size:"<<nearestRobots.size()<<endl;
     cout<<"\tPOS "<<_pos[0]<<","<<_pos[1]<<endl;
   }
-
   //---------- Force result ----------//
-  _pos[0] += 0.01f*force[0];
-  _pos[1] += 0.01f*force[1];
+  _pos[0] += force[0];
+  _pos[1] += force[1];
   //---------- Approach the farthest robot ----------//
   Robot* farthest=NULL;
   float maxDist=0;
 
   for(auto robot : nearestRobots){
-    if(_id==3){
+    if(_id==8){
       cout<<"\t"<<robot->getPos()[0]<<endl;
       cout<<"\t"<<robot->getPos()[1]<<endl;
     }
 
-    if(abs(robot->getPos()[1]-_pos[1])<0.99f){// Same level
-      float dist = robot->getPos()[0]-_pos[0];
+    if(abs(robot->getPos()[1]-_pos[1])<100){// Same level
+      int dist = robot->getPos()[0]-_pos[0];
 
       // Find the fasthest
-      if(abs(dist)>1.01f && abs(dist)>abs(maxDist)){
+      if(abs(dist)>100 && abs(dist)>abs(maxDist)){
         farthest = robot;
         maxDist = dist;
       }
     }
   }
+  // Move to the farthest
   if(farthest!=NULL){
     if(_isConnected){
       _robotConnected->setIsConnected(false);
       setIsConnected(false);
+      canConnect=false;
     }
     if(maxDist>0){
       _beltState = 2;
-      return;
     }else{
       _beltState = 1;
-      return;
     }
   }
 
   //---------- Connect to closer robot ----------//
   // Check if is far from some robot
-  bool someConnectedCloser = false;
-  for(auto robot : nearestRobots){
-    if(robot->getIsConnected()){
-      someConnectedCloser = true;
-      break;
+  if(!_isConnected){
+    bool someConnectedCloser = false;
+    for(auto robot : nearestRobots){
+      if(robot->getIsConnected()){
+        someConnectedCloser = true;
+        break;
+      }
+    }
+    if(!someConnectedCloser && nearestRobots.size()>0 && abs(nearestRobots[0]->getPos()[0]-_pos[0])<=101){
+      _robotConnected = nearestRobots[0];
+      nearestRobots[0]->setRobotConnected(this);
+      _isConnected = true;
+      nearestRobots[0]->setIsConnected(true);
     }
   }
-  if(!someConnectedCloser && nearestRobots.size()>0){
-    _robotConnected = nearestRobots[0];
-    nearestRobots[0]->setRobotConnected(this);
-    _isConnected = true;
-    nearestRobots[0]->setIsConnected(true);
-  }
-
   if(nearestRobots.size()==2){
+    // Do not connect if neighboors are connected
     if(nearestRobots[0]->getIsConnected() && nearestRobots[1]->getIsConnected()){
+      if(_isConnected){
+        _robotConnected->setIsConnected(false);
+        setIsConnected(false);
+      }
+    }
+    if(abs(nearestRobots[1]->getPos()[0]-_pos[0])>101 || abs(nearestRobots[0]->getPos()[0]-_pos[0])>101){
       if(_isConnected){
         _robotConnected->setIsConnected(false);
         setIsConnected(false);
@@ -101,14 +111,21 @@ void Robot::run(vector<Robot*>nearestRobots, vector<float>force){
       _beltState = 1;
     }
   }else{
-    if(nearestRobots.size()==1){
+    if(nearestRobots.size()==2){
+      if(abs(nearestRobots[0]->getPos()[0]-_pos[0])<=101 && abs(nearestRobots[1]->getPos()[0]-_pos[0])<=101){
+        if(nearestRobots[0]->getIsConnected()&&nearestRobots[1]->getIsConnected()){
+          _beltState = 0;
+        }
+      }
+    }
+    /*if(nearestRobots.size()==1){
       if(nearestRobots[0]->getPos()[0]>_pos[0])
         _beltState = 1;
       else
         _beltState = 2;
     }else{
       _beltState = 0;
-    }
+    }*/
   }
 }
 
@@ -117,8 +134,8 @@ void Robot::draw(){
   glColor3f(_color[0], _color[1], _color[2]);
   glBegin(GL_POLYGON);
   // Robot left bottom
-  float screenX = (2.0f/maxScreenSize)*_pos[0]-1;
-  float screenY = (2.0f/maxScreenSize)*_pos[1]-1;
+  float screenX = (2.0f/maxScreenSize)*(_pos[0]/100.0f)-1;
+  float screenY = (2.0f/maxScreenSize)*(_pos[1]/100.0f)-1;
   float w = 2.0f/maxScreenSize;
   float h = 2.0f/maxScreenSize;
 
@@ -155,8 +172,8 @@ void Robot::draw(){
   glEnd();
   //---------- Draw connection ----------//
   if(_isConnected){
-    float screenXCon = (2.0f/maxScreenSize)*_robotConnected->getPos()[0]-1;
-    float screenYCon = (2.0f/maxScreenSize)*_robotConnected->getPos()[1]-1;
+    float screenXCon = (2.0f/maxScreenSize)*(_robotConnected->getPos()[0]/100.0f)-1;
+    float screenYCon = (2.0f/maxScreenSize)*(_robotConnected->getPos()[1]/100.0f)-1;
 
     glColor3f(0.8, 0.0, 0);
     glBegin(GL_LINES);
@@ -167,10 +184,10 @@ void Robot::draw(){
 }
 
 //------------------ Setter and Getters ------------------//
-void Robot::setPos(vector<float> pos){
+void Robot::setPos(vector<int> pos){
   _pos = pos;
 }
-vector<float> Robot::getPos() const{
+vector<int> Robot::getPos() const{
   return _pos;
 }
 void Robot::setColor(vector<float> color){
@@ -181,6 +198,12 @@ void Robot::setIsConnected(bool isConnected){
   if(!_isConnected){
     _robotConnected = NULL;
   }
+}
+void Robot::setCanConnect(bool canConnected){
+
+}
+bool Robot::getCanConnect() const{
+
 }
 bool Robot::getIsConnected() const{
   return _isConnected;
